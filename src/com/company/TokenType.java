@@ -1,0 +1,20 @@
+package com.company;
+
+enum TokenType {
+    L_PAREN, R_PAREN, L_BRACE, R_BRACE, COMMA, SEMICOLON,
+    PLUS, MINUS, DIVIDE, MULT,
+
+    NOT, NOT_EQUAL,
+    EQUAL, EQUAL_EQUAL,
+    LESS, LESS_EQUAL,
+    GREATER, GREATER_EQUAL,
+
+    IDENTIFIER, STRING, NUMBER,
+
+    IF, ELSE, FOR, WHILE,
+    FN, RETURN,
+    AND, OR,
+    VAR, PRINT,
+
+    EOF
+}
