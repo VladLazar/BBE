@@ -12,8 +12,8 @@ enum TokenType {
     IDENTIFIER, STRING, NUMBER,
 
     IF, ELSE, FOR, WHILE,
-    FN, RETURN,
-    AND, OR,
+    FUN, RETURN,
+    //AND, OR,
     VAR, PRINT,
 
     EOF

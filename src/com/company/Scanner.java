@@ -1,6 +1,10 @@
 package com.company;
 
+import com.sun.org.apache.bcel.internal.generic.RET;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.company.TokenType.*;
 
@@ -10,6 +14,20 @@ class Scanner {
     private int start = 0;
     private int current = 0;
     private int line = 1;
+
+    private static final HashMap<String, TokenType> reservedKeywords;
+
+    static {
+        reservedKeywords = new HashMap<>();
+        reservedKeywords.put("if", IF);
+        reservedKeywords.put("else", ELSE);
+        reservedKeywords.put("for", FOR);
+        reservedKeywords.put("while", WHILE);
+        reservedKeywords.put("fun", FUN);
+        reservedKeywords.put("return", RETURN);
+        reservedKeywords.put("var", VAR);
+        reservedKeywords.put("print", PRINT);
+    }
 
     Scanner(String source) {
         this.source = source;
@@ -38,18 +56,66 @@ class Scanner {
             case '-' : addToken(MINUS); break;
             //TODO: Divide
             case '*' : addToken(MULT); break;
-            case '!' : addToken(match('=') ? NOT_EQUAL : NOT);
-            case '=' : addToken(match('=') ? EQUAL_EQUAL : EQUAL);
-            case '<' : addToken(match('=') ? LESS_EQUAL : LESS);
-            case '>' : addToken(match('=') ? GREATER_EQUAL : GREATER);
+            case '!' : addToken(match('=') ? NOT_EQUAL : NOT); break;
+            case '=' : addToken(match('=') ? EQUAL_EQUAL : EQUAL); break;
+            case '<' : addToken(match('=') ? LESS_EQUAL : LESS); break;
+            case '>' : addToken(match('=') ? GREATER_EQUAL : GREATER); break;
             case '/' : if(matchDivision()) addToken(DIVIDE); break;
             case ' ' : break;
             case '\r' : break;
             case '\t' : break;
             case '\n' : line++; break;
-            default : BBE.error(line, "Unexpected charcter."); break;
-
+            case '"' : string(); break;
+            default : if(isDigit(consumedChar)) {
+                //messy way of handling number literals.
+                number();
+            } else if(isAlpha(consumedChar)) {
+                identifier();
+            } else {
+                BBE.error(line, "Unexpected charcter.");
+                break;
+            }
         }
+    }
+
+    private void identifier() {
+        while(isAlphaNumeric(peek())) advance();
+
+        String indentifierText = source.substring(start, current);
+        TokenType type = reservedKeywords.get(indentifierText);
+        if(type == null) type = IDENTIFIER;
+
+        addToken(type);
+    }
+
+    private void number() {
+        while(isDigit(peek())) advance();
+
+        if(peek() == '.' && isDigit(peekNext())) {
+            advance();
+
+            while(isDigit(peek())) advance();
+        }
+
+        addToken(NUMBER, Double.parseDouble(source.substring(start, current)));
+    }
+
+    private void string() {
+        while(peek() != '"' && !isAtEnd()) {
+            if(peek() == '\n') line++;
+            advance();
+        }
+
+        if(isAtEnd()) {
+            BBE.error(line, "Unterminated string.");
+            return;
+        }
+
+        //The closing "
+        advance();
+
+        String stringLiteral = source.substring(start + 1, current - 1);
+        addToken(STRING, stringLiteral);
     }
 
     private boolean matchDivision() {
@@ -58,6 +124,11 @@ class Scanner {
             return false;
         }
         return true;
+    }
+
+    private char peekNext() {
+        if(current + 1 >= source.length()) return '\0';
+        return source.charAt(current + 1);
     }
 
     private char peek() {
@@ -90,5 +161,19 @@ class Scanner {
 
     private boolean isAtEnd() {
         return current >= source.length();
+    }
+
+    private boolean isDigit(char c) {
+        return c >= '0' && c <= '9';
+    }
+
+    private boolean isAlpha(char c) {
+        return  (c >= 'a' && c <= 'z') ||
+                (c >= 'A' && c <= 'Z') ||
+                (c == '_');
+    }
+
+    private boolean isAlphaNumeric(char c) {
+        return isAlpha(c) || isDigit(c);
     }
 }
